@@ -1,8 +1,6 @@
 package com.parsing.docjson.controller;
 
 import com.parsing.docjson.service.FileParsingService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -10,14 +8,18 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/convert")
-@RequiredArgsConstructor
+@RequestMapping("/parse")
 public class FileParsingController {
 
-    private final FileParsingService fileParsingService;
+    public final FileParsingService fileParsingService;
+
+    public FileParsingController(FileParsingService fileParsingService) {
+        this.fileParsingService = fileParsingService;
+    }
 
     @PostMapping("/upload")
-    public ResponseEntity<String>parseWord(@RequestParam("file") MultipartFile file) {
-        return fileParsingService.parseWordToJson(file);
+    public String upload(@RequestParam("file") MultipartFile file) throws Exception {
+        fileParsingService.upload(file);
+        return "File uploaded successfully";
     }
 }

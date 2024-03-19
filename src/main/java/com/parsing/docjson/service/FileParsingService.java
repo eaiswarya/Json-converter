@@ -1,41 +1,58 @@
 package com.parsing.docjson.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+
+import java.util.Map;
+
+
 
 @Service
-@RequiredArgsConstructor
+
 public class FileParsingService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Producer.class);
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public  ResponseEntity<String>parseWordToJson(MultipartFile file) {
-        try {
+    public FileParsingService(KafkaTemplate<String, String> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+
+
+    public void upload(MultipartFile file) throws Exception {
+
             XWPFDocument doc = new XWPFDocument(file.getInputStream());
-            List<XWPFParagraph> paragraphs = doc.getParagraphs();
-            List<String> paragraphTexts = paragraphs.stream()
-                    .map(XWPFParagraph::getText)
-                    .collect(Collectors.toList());
+            XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
+            Map<String, String> jsonMap = new HashMap<>();
+            jsonMap.put("text", extractor.getText());
+
             ObjectMapper mapper = new ObjectMapper();
 
-            String json = mapper.writeValueAsString(paragraphTexts);
-            kafkaTemplate.send("doc-json", json);
-            return ResponseEntity.ok("File uploaded");
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error parsing");
+            String json = mapper.writeValueAsString(jsonMap);
+            LOGGER.info("JSON message-> {}", json);
+
+            Message<String> message = MessageBuilder
+                    .withPayload(json)
+                    .setHeader(KafkaHeaders.TOPIC, "doc-json")
+                    .build();
+
+            kafkaTemplate.send(message);
+
         }
     }
 
-}
+
