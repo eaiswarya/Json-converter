@@ -18,8 +18,8 @@ public class FileParsingController {
     }
 
     @PostMapping("/upload")
-    public String upload(@RequestParam("file") MultipartFile file) throws Exception {
-        fileParsingService.upload(file);
+    public String parse(@RequestParam("file") MultipartFile file) throws Exception {
+        fileParsingService.parse(file);
         return "File uploaded successfully";
     }
 }

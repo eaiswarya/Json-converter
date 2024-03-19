@@ -33,7 +33,7 @@ public class FileParsingService {
 
 
 
-    public void upload(MultipartFile file) throws Exception {
+    public void parse(MultipartFile file) throws Exception {
 
             XWPFDocument doc = new XWPFDocument(file.getInputStream());
             XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
